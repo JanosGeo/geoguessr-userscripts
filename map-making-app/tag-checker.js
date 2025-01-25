@@ -79,7 +79,7 @@ function addStyle() {
 function createDivButton() {
   let divButton = document.createElement("button");
   divButton.textContent = "Check Tags";
-  divButton.id = "divButton";
+  divButton.id = "__tag_divButton";
   divButton.style.position = "fixed";
   divButton.style.right = "205px";
   divButton.style.bottom = "15px";
@@ -93,13 +93,13 @@ function createDivButton() {
 
   document.body.appendChild(divButton);
   divButton.addEventListener("click", function () {
-    document.getElementById("divFormula").style.display = "flex";
+    document.getElementById("__tag_divFormula").style.display = "flex";
   });
 }
 
 function createDivFormula() {
   let divFormula = document.createElement("div");
-  divFormula.id = "divFormula";
+  divFormula.id = "__tag_divFormula";
   divFormula.style.display = "none";
   divFormula.style.position = "fixed";
   divFormula.style.top = "50%";
@@ -136,7 +136,7 @@ function createDivFormula() {
   document
     .getElementById("__tag_buttonCancel")
     .addEventListener("click", function () {
-      document.getElementById("divFormula").style.display = "none";
+      document.getElementById("__tag_divFormula").style.display = "none";
     });
 
   document
@@ -184,7 +184,7 @@ function createDivFormula() {
       noCarElement.checked = false;
       carDupEl.checked = false;
 
-      document.getElementById("divFormula").style.display = "none";
+      document.getElementById("__tag_divFormula").style.display = "none";
     });
 }
 
