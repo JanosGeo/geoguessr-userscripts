@@ -10,6 +10,12 @@
 // @grant        none
 // ==/UserScript==
 
+// JanosGeo comments:
+// Modified the code to
+// 1. Use the order and same color for the tags
+// 2. Customize the styling
+// 3. Add the option to right-click to make an intersection instead of a union.
+
 function addStyle() {
   let style = document.createElement("style");
   style.type = "text/css";
