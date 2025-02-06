@@ -47,11 +47,35 @@ function toggleNthTag(n) {
   tagButtons[n - 1].click();
 }
 
+function toggleTagsBeforeDoubleDash() {
+  const tagList = document.getElementsByClassName("tag-list")[0];
+  if (!tagList) return;
+
+  const tagButtons = tagList.getElementsByClassName("tag");
+  const tagLabels = tagList.getElementsByClassName("tag");
+  for (let i = 0; i < tagButtons.length; i++) {
+    const tag = tagButtons[i];
+    console.log(tag.textContent.trim());
+    if (tag.textContent.trim().startsWith("--")) {
+      break;
+    }
+    tag.click();
+  }
+}
+
 window.onkeydown = function (event) {
   const charCode = event.keyCode ?? event.charCode;
   if (!charCode) return;
   // Ignore input fields
   if (event.target.tagName.toLowerCase() === "input") return;
+
+  // Check for Shift + E, in which case activate/deactivate all tags up until the tag "--"
+  // Check for Shift + E (using event.key)
+  if (event.shiftKey && event.key === "E") {
+    toggleTagsBeforeDoubleDash();
+    return;
+  }
+
   // numbers are in the [48, 57] range
   if (charCode < 48) return;
   if (charCode > 57) return;
