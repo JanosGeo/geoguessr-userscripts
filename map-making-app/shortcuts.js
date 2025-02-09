@@ -63,6 +63,11 @@ function toggleTagsBeforeDoubleDash() {
   }
 }
 
+function deselectAll() {
+  const deselectButton = document.querySelector('[data-qa="selection-clear"]');
+  deselectButton.click();
+}
+
 window.onkeydown = function (event) {
   const charCode = event.keyCode ?? event.charCode;
   if (!charCode) return;
@@ -74,6 +79,11 @@ window.onkeydown = function (event) {
   if (event.shiftKey && event.key === "E") {
     toggleTagsBeforeDoubleDash();
     return;
+  }
+
+  // Check for Shift + Q, which is used to deselect all locations
+  if (event.shiftKey && event.key === "Q") {
+    deselectAll();
   }
 
   // numbers are in the [48, 57] range
