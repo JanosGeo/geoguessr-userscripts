@@ -70,31 +70,44 @@ function hasBadTags(
         const year = parseInt(tag, 10);
         return year >= 2005 && year <= currentYear;
       });
+      const monthTags = getFilteredTags((tag) => /^(0[1-9]|1[0-2])$/.test(tag)); // Capture 01-12 month tags
       const yymmTags = getFilteredTags((tag) =>
         /^(\d{2})-(\d{1,2})$/.test(tag)
       );
 
       const latestYearTag =
         yearTags.length > 0 ? Math.max(...yearTags.map(Number)) : null;
+      const latestMonthTag =
+        monthTags.length > 0 ? Math.max(...monthTags.map(Number)) : null;
 
-      if (yymmTags.length === 0 || latestYearTag === null) {
+      if (
+        yymmTags.length === 0 ||
+        latestYearTag === null ||
+        latestMonthTag === null
+      ) {
         return false;
       }
 
-      const latestYYMMTagStr = yymmTags[0]; // Assuming the first is sufficient for "the" YY-MM tag
+      // Assuming yymmTags[0] is the primary/latest YY-MM tag to check against
+      const latestYYMMTagStr = yymmTags[0];
       const match = latestYYMMTagStr.match(/^(\d{2})-(\d{1,2})$/);
+
       if (match) {
         const yyPart = parseInt(match[1], 10);
-        const mmPart = parseInt(match[2], 10);
+        const mmFromYYMM = parseInt(match[2], 10);
 
-        // Construct the full year from YY part (e.g., 24 -> 2024 if current year is 2024)
-        // This assumes the YY is for the current century.
-        const currentCenturyPrefix = Math.floor(currentYear / 100);
-        const fullYearFromYYMM = currentCenturyPrefix * 100 + yyPart;
+        let fullYearFromYYMM;
+        const currentYearLastTwoDigits = currentYear % 100;
 
-        const currentMonth = new Date().getMonth() + 1; // getMonth() is 0-indexed
+        if (yyPart <= currentYearLastTwoDigits) {
+          fullYearFromYYMM = Math.floor(currentYear / 100) * 100 + yyPart;
+        } else {
+          fullYearFromYYMM = (Math.floor(currentYear / 100) - 1) * 100 + yyPart;
+        }
 
-        return latestYearTag === fullYearFromYYMM && mmPart === currentMonth;
+        return (
+          latestYearTag === fullYearFromYYMM && mmFromYYMM === latestMonthTag
+        );
       }
     }
   }
