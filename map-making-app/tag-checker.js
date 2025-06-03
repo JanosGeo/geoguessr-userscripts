@@ -19,7 +19,8 @@ function hasBadTags(
   checkNoCar,
   checkDuplicateCar,
   checkNoYYMM,
-  checkDuplicateYYMM
+  checkDuplicateYYMM,
+  checkBadUpdates
 ) {
   const currentYear = new Date().getFullYear();
 
@@ -61,6 +62,41 @@ function hasBadTags(
     const yymmTags = getFilteredTags((tag) => /^(\d{2})-(\d{1,2})$/.test(tag));
     if (checkNoYYMM && yymmTags.length === 0) return true;
     if (checkDuplicateYYMM && yymmTags.length > 1) return true;
+  }
+
+  if (checkBadUpdates) {
+    if (location.tags.includes("Updated")) {
+      const yearTags = getFilteredTags((tag) => {
+        const year = parseInt(tag, 10);
+        return year >= 2005 && year <= currentYear;
+      });
+      const yymmTags = getFilteredTags((tag) =>
+        /^(\d{2})-(\d{1,2})$/.test(tag)
+      );
+
+      const latestYearTag =
+        yearTags.length > 0 ? Math.max(...yearTags.map(Number)) : null;
+
+      if (yymmTags.length === 0 || latestYearTag === null) {
+        return false;
+      }
+
+      const latestYYMMTagStr = yymmTags[0]; // Assuming the first is sufficient for "the" YY-MM tag
+      const match = latestYYMMTagStr.match(/^(\d{2})-(\d{1,2})$/);
+      if (match) {
+        const yyPart = parseInt(match[1], 10);
+        const mmPart = parseInt(match[2], 10);
+
+        // Construct the full year from YY part (e.g., 24 -> 2024 if current year is 2024)
+        // This assumes the YY is for the current century.
+        const currentCenturyPrefix = Math.floor(currentYear / 100);
+        const fullYearFromYYMM = currentCenturyPrefix * 100 + yyPart;
+
+        const currentMonth = new Date().getMonth() + 1; // getMonth() is 0-indexed
+
+        return latestYearTag === fullYearFromYYMM && mmPart === currentMonth;
+      }
+    }
   }
 
   return false;
@@ -141,6 +177,8 @@ function createDivFormula() {
     "<div><input style='margin-right:8px;' id='__tag_checknoyymm' type='checkbox'></input><label for='__tag_checknoyymm'>Check for no YY-M tag</label></div>";
   strHTML +=
     "<div><input style='margin-right:8px;' id='__tag_checkduplicateyymm' type='checkbox'></input><label for='__tag_checkduplicateyymm'>Check for duplicate YY-M tags</label></div>";
+  strHTML +=
+    "<div><input style='margin-right:8px;' id='__tag_checkbadupdates' type='checkbox'></input><label for='__tag_checkbadupdates'>Check for bad updates</label></div>";
 
   strHTML += "<div style='display:flex;flex-direction:row;margin:15px;'>";
   strHTML +=
@@ -180,6 +218,10 @@ function createDivFormula() {
         "__tag_checkduplicateyymm"
       );
       const checkDuplicateYYMM = dupYYMMElement.checked;
+      const badUpdatesElement = document.getElementById(
+        "__tag_checkbadupdates"
+      );
+      const checkBadUpdates = badUpdatesElement.checked;
 
       let locationList = [];
       for (let i = 0; i < window.locations.length; i++) {
@@ -193,7 +235,8 @@ function createDivFormula() {
             checkNoCar,
             checkDuplicateCar,
             checkNoYYMM,
-            checkDuplicateYYMM
+            checkDuplicateYYMM,
+            checkBadUpdates
           )
         ) {
           locationList.push(window.locations[i]);
@@ -212,6 +255,7 @@ function createDivFormula() {
 
       noYYMMElement.checked = false;
       dupYYMMElement.checked = false;
+      badUpdatesElement.checked = false;
 
       document.getElementById("__tag_divFormula").style.display = "none";
     });
