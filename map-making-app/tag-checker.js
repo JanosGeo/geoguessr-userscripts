@@ -17,7 +17,9 @@ function hasBadTags(
   checkNoMonth,
   checkDuplicateMonth,
   checkNoCar,
-  checkDuplicateCar
+  checkDuplicateCar,
+  checkNoYYMM,
+  checkDuplicateYYMM
 ) {
   const currentYear = new Date().getFullYear();
 
@@ -44,10 +46,21 @@ function hasBadTags(
 
   if (checkNoCar || checkDuplicateCar) {
     const carTags = getFilteredTags(
-      (tag) => tag === "Gen2" || tag === "Gen3" || tag.startsWith("gen4-")
+      (tag) =>
+        tag === "Gen2" ||
+        tag === "Gen3" ||
+        tag.startsWith("gen4-") ||
+        tag.startsWith("gen3-")
     );
     if (checkNoCar && carTags.length === 0) return true;
     if (checkDuplicateCar && carTags.length > 1) return true;
+  }
+
+  if (checkNoYYMM || checkDuplicateYYMM) {
+    // Match tags like "24-5", "24-05", "19-12", etc.
+    const yymmTags = getFilteredTags((tag) => /^(\d{2})-(\d{1,2})$/.test(tag));
+    if (checkNoYYMM && yymmTags.length === 0) return true;
+    if (checkDuplicateYYMM && yymmTags.length > 1) return true;
   }
 
   return false;
@@ -124,6 +137,10 @@ function createDivFormula() {
     "<div><input style='margin-right:8px;' id='__tag_checknocar' type='checkbox'></input><label for='__tag_checknocar'>Check for no car-tags</label></div>";
   strHTML +=
     "<div><input style='margin-right:8px;' id='__tag_checkduplicatecar' type='checkbox'></input><label for='__tag_checkduplicatecar'>Check for duplicate car-tags</label></div>";
+  strHTML +=
+    "<div><input style='margin-right:8px;' id='__tag_checknoyymm' type='checkbox'></input><label for='__tag_checknoyymm'>Check for no YY-M tag</label></div>";
+  strHTML +=
+    "<div><input style='margin-right:8px;' id='__tag_checkduplicateyymm' type='checkbox'></input><label for='__tag_checkduplicateyymm'>Check for duplicate YY-M tags</label></div>";
 
   strHTML += "<div style='display:flex;flex-direction:row;margin:15px;'>";
   strHTML +=
@@ -142,7 +159,6 @@ function createDivFormula() {
   document
     .getElementById("__tag_buttonExec")
     .addEventListener("click", function () {
-      console.log("run");
       const noMonthEl = document.getElementById("__tag_checknoyear");
       const checkNoYear = noMonthEl.checked;
       const yearDupEl = document.getElementById("__tag_checkduplicateyear");
@@ -157,6 +173,14 @@ function createDivFormula() {
       const checkNoCar = noCarElement.checked;
       const carDupEl = document.getElementById("__tag_checkduplicatecar");
       const checkDuplicateCar = carDupEl.checked;
+
+      const noYYMMElement = document.getElementById("__tag_checknoyymm");
+      const checkNoYYMM = noYYMMElement.checked;
+      const dupYYMMElement = document.getElementById(
+        "__tag_checkduplicateyymm"
+      );
+      const checkDuplicateYYMM = dupYYMMElement.checked;
+
       let locationList = [];
       for (let i = 0; i < window.locations.length; i++) {
         if (
@@ -167,7 +191,9 @@ function createDivFormula() {
             checkNoMonth,
             checkDuplicateMonth,
             checkNoCar,
-            checkDuplicateCar
+            checkDuplicateCar,
+            checkNoYYMM,
+            checkDuplicateYYMM
           )
         ) {
           locationList.push(window.locations[i]);
@@ -183,6 +209,9 @@ function createDivFormula() {
 
       noCarElement.checked = false;
       carDupEl.checked = false;
+
+      noYYMMElement.checked = false;
+      dupYYMMElement.checked = false;
 
       document.getElementById("__tag_divFormula").style.display = "none";
     });
