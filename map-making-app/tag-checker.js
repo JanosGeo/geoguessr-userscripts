@@ -20,7 +20,9 @@ function hasBadTags(
   checkDuplicateCar,
   checkNoYYMM,
   checkDuplicateYYMM,
-  checkBadUpdates
+  checkBadUpdates,
+  checkNoXXXXm,
+  checkDuplicateXXXXm
 ) {
   const currentYear = new Date().getFullYear();
 
@@ -51,7 +53,8 @@ function hasBadTags(
         tag === "Gen2" ||
         tag === "Gen3" ||
         tag.startsWith("gen4-") ||
-        tag.startsWith("gen3-")
+        tag.startsWith("gen3-") ||
+        tag.startsWith("Smallcam")
     );
     if (checkNoCar && carTags.length === 0) return true;
     if (checkDuplicateCar && carTags.length > 1) return true;
@@ -62,6 +65,12 @@ function hasBadTags(
     const yymmTags = getFilteredTags((tag) => /^(\d{2})-(\d{1,2})$/.test(tag));
     if (checkNoYYMM && yymmTags.length === 0) return true;
     if (checkDuplicateYYMM && yymmTags.length > 1) return true;
+  }
+
+  if (checkNoXXXXm || checkDuplicateXXXXm) {
+    const xxxxmTags = getFilteredTags((tag) => /\d{2,}m$/.test(tag));
+    if (checkNoXXXXm && xxxxmTags.length === 0) return true;
+    if (checkDuplicateXXXXm && xxxxmTags.length > 1) return true;
   }
 
   if (checkBadUpdates) {
@@ -192,6 +201,11 @@ function createDivFormula() {
     "<div><input style='margin-right:8px;' id='__tag_checkduplicateyymm' type='checkbox'></input><label for='__tag_checkduplicateyymm'>Check for duplicate YY-M tags</label></div>";
   strHTML +=
     "<div><input style='margin-right:8px;' id='__tag_checkbadupdates' type='checkbox'></input><label for='__tag_checkbadupdates'>Check for bad updates</label></div>";
+  // New checkboxes for XXXXm tags
+  strHTML +=
+    "<div><input style='margin-right:8px;' id='__tag_checkno_xxxxm' type='checkbox'></input><label for='__tag_checkno_xxxxm'>Check for no XXXXm tag</label></div>";
+  strHTML +=
+    "<div><input style='margin-right:8px;' id='__tag_checkduplicate_xxxxm' type='checkbox'></input><label for='__tag_checkduplicate_xxxxm'>Check for duplicate XXXXm tags</label></div>";
 
   strHTML += "<div style='display:flex;flex-direction:row;margin:15px;'>";
   strHTML +=
@@ -236,6 +250,14 @@ function createDivFormula() {
       );
       const checkBadUpdates = badUpdatesElement.checked;
 
+      // Retrieve checked state for new XXXXm checkboxes
+      const noXXXXmElement = document.getElementById("__tag_checkno_xxxxm");
+      const checkNoXXXXm = noXXXXmElement.checked;
+      const dupXXXXmElement = document.getElementById(
+        "__tag_checkduplicate_xxxxm"
+      );
+      const checkDuplicateXXXXm = dupXXXXmElement.checked;
+
       let locationList = [];
       for (let i = 0; i < window.locations.length; i++) {
         if (
@@ -249,7 +271,9 @@ function createDivFormula() {
             checkDuplicateCar,
             checkNoYYMM,
             checkDuplicateYYMM,
-            checkBadUpdates
+            checkBadUpdates,
+            checkNoXXXXm, // Pass new parameter
+            checkDuplicateXXXXm // Pass new parameter
           )
         ) {
           locationList.push(window.locations[i]);
@@ -269,6 +293,9 @@ function createDivFormula() {
       noYYMMElement.checked = false;
       dupYYMMElement.checked = false;
       badUpdatesElement.checked = false;
+      // Reset new checkboxes
+      noXXXXmElement.checked = false;
+      dupXXXXmElement.checked = false;
 
       document.getElementById("__tag_divFormula").style.display = "none";
     });
