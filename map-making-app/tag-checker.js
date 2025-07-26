@@ -35,7 +35,9 @@ function hasBadTags(
   if (checkNoYear || checkDuplicateYear) {
     const yearTags = getFilteredTags((tag) => {
       const year = parseInt(tag, 10);
-      return year >= 2005 && year <= currentYear;
+      // Check if the parsed year, when converted back to a string,
+      // is identical to the original tag. This ensures no extra characters.
+      return String(year) === tag && year >= 2005 && year <= currentYear;
     });
     if (checkNoYear && yearTags.length === 0) return true;
     if (checkDuplicateYear && yearTags.length > 1) return true;
@@ -77,7 +79,9 @@ function hasBadTags(
     if (location.tags.includes("Updated")) {
       const yearTags = getFilteredTags((tag) => {
         const year = parseInt(tag, 10);
-        return year >= 2005 && year <= currentYear;
+        // Check if the parsed year, when converted back to a string,
+        // is identical to the original tag. This ensures no extra characters.
+        return String(year) === tag && year >= 2005 && year <= currentYear;
       });
       const monthTags = getFilteredTags((tag) => /^(0[1-9]|1[0-2])$/.test(tag)); // Capture 01-12 month tags
       const yymmTags = getFilteredTags((tag) =>
