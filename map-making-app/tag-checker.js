@@ -22,7 +22,8 @@ function hasBadTags(
   checkDuplicateYYMM,
   checkBadUpdates,
   checkNoXXXXm,
-  checkDuplicateXXXXm
+  checkDuplicateXXXXm,
+  checkCopyrightYear
 ) {
   const currentYear = new Date().getFullYear();
 
@@ -73,6 +74,14 @@ function hasBadTags(
     const xxxxmTags = getFilteredTags((tag) => /\d{2,}m$/.test(tag));
     if (checkNoXXXXm && xxxxmTags.length === 0) return true;
     if (checkDuplicateXXXXm && xxxxmTags.length > 1) return true;
+  }
+
+  if (checkCopyrightYear) {
+    const copyrightTags = getFilteredTags((tag) => {
+      // Matches a 4-digit year followed by "(C)"
+      return /^\d{4}\(C\)$/.test(tag);
+    });
+    if (copyrightTags.length == 0) return true;
   }
 
   if (checkBadUpdates) {
@@ -210,6 +219,8 @@ function createDivFormula() {
     "<div><input style='margin-right:8px;' id='__tag_checkno_xxxxm' type='checkbox'></input><label for='__tag_checkno_xxxxm'>Check for no XXXXm tag</label></div>";
   strHTML +=
     "<div><input style='margin-right:8px;' id='__tag_checkduplicate_xxxxm' type='checkbox'></input><label for='__tag_checkduplicate_xxxxm'>Check for duplicate XXXXm tags</label></div>";
+  strHTML +=
+    "<div><input style='margin-right:8px;' id='__tag_checkcopyrightyear' type='checkbox'></input><label for='__tag_checkcopyrightyear'>Check for no (C) tags</label></div>";
 
   strHTML += "<div style='display:flex;flex-direction:row;margin:15px;'>";
   strHTML +=
@@ -262,6 +273,11 @@ function createDivFormula() {
       );
       const checkDuplicateXXXXm = dupXXXXmElement.checked;
 
+      const copyrightYearElement = document.getElementById(
+        "__tag_checkcopyrightyear"
+      );
+      const checkCopyrightYear = copyrightYearElement.checked;
+
       let locationList = [];
       for (let i = 0; i < window.locations.length; i++) {
         if (
@@ -276,8 +292,9 @@ function createDivFormula() {
             checkNoYYMM,
             checkDuplicateYYMM,
             checkBadUpdates,
-            checkNoXXXXm, // Pass new parameter
-            checkDuplicateXXXXm // Pass new parameter
+            checkNoXXXXm,
+            checkDuplicateXXXXm,
+            checkCopyrightYear
           )
         ) {
           locationList.push(window.locations[i]);
@@ -297,9 +314,9 @@ function createDivFormula() {
       noYYMMElement.checked = false;
       dupYYMMElement.checked = false;
       badUpdatesElement.checked = false;
-      // Reset new checkboxes
       noXXXXmElement.checked = false;
       dupXXXXmElement.checked = false;
+      copyrightYearElement.checked = false;
 
       document.getElementById("__tag_divFormula").style.display = "none";
     });
