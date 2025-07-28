@@ -81,6 +81,12 @@ window.onkeydown = function (event) {
     return;
   }
 
+  // Check for Shift + A, which is a shortcut for and selections
+  if (event.shiftKey && event.key === "A") {
+    window.editor.selectIntersection();
+    return;
+  }
+
   // Check for Shift + Q, which is used to deselect all locations
   if (event.shiftKey && event.key === "Q") {
     deselectAll();
