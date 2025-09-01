@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Map Making App Resizer
 // @namespace    http://tampermonkey.net/
-// @version      2025-08-25
+// @version      2025-09-01
 // @description  Adds a draggable resizer between map and overview panels, remembers last position per map ID, and allows reset on double-click.
 // @author       JanosGeo
 // @match        https://map-making.app/maps/*
@@ -63,7 +63,7 @@
       resizer.style.width = "10px";
       resizer.style.cursor = "ew-resize";
       resizer.style.background = "rgba(0,0,0,0.1)";
-      resizer.style.zIndex = "9999";
+      resizer.style.zIndex = "5"; // Modals seem to show up with a zIndex of 10. Previous value of 9999 here would show up above the modals which looked weird.
 
       // Position resizer initially
       function updateResizerPosition() {
