@@ -1,10 +1,11 @@
 // ==UserScript==
 // @name         GeoGuessr Profile – Best/Worst Countries
 // @namespace    http://tampermonkey.net/
-// @version      0.1.1
-// @description  Show a player's best and worst countries on their profile page, above the daily challenge streak box
+// @version      0.1.4
+// @description  Show a player's best and worst countries on their profile page, after the multiplayer box
 // @author       JanosGeo
 // @match        https://www.geoguessr.com/user/*
+// @match        https://www.geoguessr.com/me/profile
 // @icon         https://www.google.com/s2/favicons?sz=64&domain=geoguessr.com
 // @grant        none
 // @license      MIT
@@ -27,34 +28,34 @@ async function checkBestCountries(profileId) {
 }
 
 function codeToFlagEmoji(code) {
-  return code
-    .toUpperCase()
-    .replace(/./g, (char) => String.fromCodePoint(char.charCodeAt(0) + 127397));
+  const upper = code.toUpperCase();
+  const flag = upper.replace(/./g, (char) =>
+    String.fromCodePoint(char.charCodeAt(0) + 127397)
+  );
+  return `<span title="${upper}" style="font-size:24px; margin-right:4px;">${flag}</span>`;
 }
 
 function showBestWorstCountries(data) {
-  const streakBox = document.querySelector(
-    '[class^="daily-challenge-streak_root__"]'
+  const multiplayerBox = document.querySelector(
+    '[class^="multiplayer_root__"]'
   );
-  if (!streakBox) return;
+  if (!multiplayerBox) return;
 
   if (document.getElementById("best-worst-countries-box")) return;
 
-  console.log(data);
   const container = document.createElement("div");
   container.id = "best-worst-countries-box";
+  container.style.marginTop = "12px";
   container.style.marginBottom = "12px";
-  container.style.padding = "10px";
-  container.style.paddingRight = "20px";
-
+  container.style.padding = "10px 20px 10px 10px";
   container.style.border = "2px solid #ccc";
   container.style.borderRadius = "5px";
   container.style.fontSize = "20px";
   container.style.display = "grid";
-  container.style.gridTemplateColumns = "80px auto"; // left column label, right column flags
+  container.style.gridTemplateColumns = "80px auto";
   container.style.rowGap = "6px";
   container.style.alignItems = "center";
-  container.style.textAlign = "left"; // 👈 ensures text is left aligned
+  container.style.textAlign = "left";
 
   const best =
     data.bestCountries?.map((c) => codeToFlagEmoji(c)).join(" ") || "N/A";
@@ -68,20 +69,40 @@ function showBestWorstCountries(data) {
     <div>${worst}</div>
   `;
 
-  // Insert before the daily streak block
-  streakBox.parentNode.insertBefore(container, streakBox);
+  // 👇 Insert AFTER the multiplayer box
+  multiplayerBox.parentNode.insertBefore(container, multiplayerBox.nextSibling);
 }
 
+// Utility to wait for elements added dynamically
+function waitForElement(selector) {
+  return new Promise((resolve) => {
+    const el = document.querySelector(selector);
+    if (el) return resolve(el);
+
+    const obs = new MutationObserver(() => {
+      const el = document.querySelector(selector);
+      if (el) {
+        obs.disconnect();
+        resolve(el);
+      }
+    });
+    obs.observe(document.body, { childList: true, subtree: true });
+  });
+}
+
+// Watch page mutations
 let observer = new MutationObserver(() => {
   if (!checkURL()) return;
 
-  const profileLink = location.pathname.includes("/me/profile")
-    ? document.querySelector('[name="copy-link"]').value
-    : location.href;
-  const profileId = profileLink.substr(profileLink.lastIndexOf("/") + 1);
+  waitForElement('[class^="multiplayer_root__"]').then(() => {
+    const profileLink = location.pathname.includes("/me/profile")
+      ? document.querySelector('[name="copy-link"]').value
+      : location.href;
+    const profileId = profileLink.substr(profileLink.lastIndexOf("/") + 1);
 
-  checkBestCountries(profileId).then((data) => {
-    if (data) showBestWorstCountries(data);
+    checkBestCountries(profileId).then((data) => {
+      if (data) showBestWorstCountries(data);
+    });
   });
 });
 
