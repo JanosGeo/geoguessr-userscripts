@@ -1,9 +1,9 @@
 // ==UserScript==
 // @name         map-making.app formula selector
 // @namespace    http://tampermonkey.net/
-// @version      2024-09-08
+// @version      1.0.0
 // @description  in map edition page, adds a formula button at the bottom right
-// @author       .flamby.
+// @author       JanosGeo
 // @match        https://map-making.app/maps/*
 // @run-at       document-idle
 // @icon         https://www.google.com/s2/favicons?sz=64&domain=map-making.app
@@ -11,7 +11,7 @@
 // ==/UserScript==
 
 // JanosGeo comments:
-// Modified the code to
+// Original code developed by .flamby. I've modified the code to
 // 1. Use the order and same color for the tags
 // 2. Customize the styling
 // 3. Add the option to right-click to make an intersection instead of a union.
