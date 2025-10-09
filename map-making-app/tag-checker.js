@@ -21,6 +21,7 @@ function hasBadTags(
   checkNoYYMM,
   checkDuplicateYYMM,
   checkBadUpdates,
+  checkMonthFalseUpdate,
   checkNoXXXXm,
   checkDuplicateXXXXm,
   checkCopyrightYear
@@ -57,7 +58,8 @@ function hasBadTags(
         tag === "Gen3" ||
         tag.startsWith("gen4-") ||
         tag.startsWith("gen3-") ||
-        tag.startsWith("Smallcam")
+        tag.startsWith("Smallcam") ||
+        tag.startsWith("Shitcam")
     );
     if (checkNoCar && carTags.length === 0) return true;
     if (checkDuplicateCar && carTags.length > 1) return true;
@@ -84,7 +86,7 @@ function hasBadTags(
     if (copyrightTags.length == 0) return true;
   }
 
-  if (checkBadUpdates) {
+  if (checkBadUpdates || checkMonthFalseUpdate) {
     if (location.tags.includes("Updated")) {
       const yearTags = getFilteredTags((tag) => {
         const year = parseInt(tag, 10);
@@ -127,9 +129,21 @@ function hasBadTags(
           fullYearFromYYMM = (Math.floor(currentYear / 100) - 1) * 100 + yyPart;
         }
 
-        return (
-          latestYearTag === fullYearFromYYMM && mmFromYYMM === latestMonthTag
-        );
+        let ret = false;
+        if (checkBadUpdates) {
+          ret =
+            ret ||
+            (latestYearTag === fullYearFromYYMM &&
+              mmFromYYMM === latestMonthTag);
+        }
+
+        if (checkMonthFalseUpdate) {
+          const existingMonth = latestYearTag * 12 + latestMonthTag;
+          const newMonth = fullYearFromYYMM * 12 + mmFromYYMM;
+          ret = ret || Math.abs(existingMonth - newMonth) == 1;
+        }
+
+        return ret;
       }
     }
   }
@@ -214,7 +228,8 @@ function createDivFormula() {
     "<div><input style='margin-right:8px;' id='__tag_checkduplicateyymm' type='checkbox'></input><label for='__tag_checkduplicateyymm'>Check for duplicate YY-M tags</label></div>";
   strHTML +=
     "<div><input style='margin-right:8px;' id='__tag_checkbadupdates' type='checkbox'></input><label for='__tag_checkbadupdates'>Check for bad updates</label></div>";
-  // New checkboxes for XXXXm tags
+  strHTML +=
+    "<div><input style='margin-right:8px;' id='__tag_checkmonthfalseupdate' type='checkbox'></input><label for='__tag_checkmonthfalseupdate'>Check for month false update</label></div>";
   strHTML +=
     "<div><input style='margin-right:8px;' id='__tag_checkno_xxxxm' type='checkbox'></input><label for='__tag_checkno_xxxxm'>Check for no XXXXm tag</label></div>";
   strHTML +=
@@ -265,6 +280,11 @@ function createDivFormula() {
       );
       const checkBadUpdates = badUpdatesElement.checked;
 
+      const falseMonthUpdate = document.getElementById(
+        "__tag_checkmonthfalseupdate"
+      );
+      const checkMonthFalseUpdate = falseMonthUpdate.checked;
+
       // Retrieve checked state for new XXXXm checkboxes
       const noXXXXmElement = document.getElementById("__tag_checkno_xxxxm");
       const checkNoXXXXm = noXXXXmElement.checked;
@@ -292,6 +312,7 @@ function createDivFormula() {
             checkNoYYMM,
             checkDuplicateYYMM,
             checkBadUpdates,
+            checkMonthFalseUpdate,
             checkNoXXXXm,
             checkDuplicateXXXXm,
             checkCopyrightYear
