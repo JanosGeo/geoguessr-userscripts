@@ -15,12 +15,17 @@ parser = argparse.ArgumentParser(
     prog="Split month tags",
 )
 parser.add_argument("map_id")
+parser.add_argument(
+    "-t",
+    "--tags",
+    nargs="*",
+    help="If provided, only locations that include any of these tags will be changed",
+)
 args = parser.parse_args()
 map_id = int(args.map_id)
 TOKEN = os.environ["API_KEY"]
 conn = MmaConnection(TOKEN)
 maps = conn.get_maps()
-
 locs = []
 existing_locs = []
 for map in maps:
@@ -59,6 +64,8 @@ new_locs = []
 remove_locs = []
 
 for loc in existing_locs:
+    if args.tags is not None and not any((t in args.tags for t in loc["tags"])):
+        continue
     found, tags = process_tags(loc["tags"])
     if found:
         new_loc = copy.deepcopy(loc)

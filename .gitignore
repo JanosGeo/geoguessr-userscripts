@@ -1,6 +1,8 @@
 .venv/
 .env
 __pycache__/
+mma-api/pan_to_loc_before.json
+mma-api/reset_zoom_before.json
 mma-api/split_tags_before.json
 mma-api/input/
 mma-api/backup/
