@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Mapping nerds tag checker
 // @namespace    http://tampermonkey.net/
-// @version      2025-10-29
+// @version      1.0.0
 // @description  Helper script for some common checks that we want to run while checking
 // @author       JanosGeo
 // @match        https://map-making.app/maps/*
@@ -16,7 +16,9 @@ function checkTags(
   checkDuplicateYear,
   checkNoMonth,
   checkDuplicateMonth,
-  checkInconsistentDates
+  checkInconsistentDates,
+  checkNoCarTag,
+  checkDuplicateCarTags
 ) {
   const currentYear = new Date().getFullYear();
 
@@ -38,7 +40,7 @@ function checkTags(
   }
 
   if (checkNoMonth || checkDuplicateMonth) {
-    const monthTags = getFilteredTags((tag) => /^([1-9]|1[0-2])$/.test(tag));
+    const monthTags = getFilteredTags((tag) => /^(0[1-9]|1[0-2])$/.test(tag));
     if (checkNoMonth && monthTags.length === 0) return true;
     if (checkDuplicateMonth && monthTags.length > 1) return true;
   }
@@ -50,7 +52,7 @@ function checkTags(
       // is identical to the original tag. This ensures no extra characters.
       return String(year) === tag && year >= 2005 && year <= currentYear;
     });
-    const monthTags = getFilteredTags((tag) => /^([1-9]|1[0-2])$/.test(tag)); // Capture 1-12 month tags
+    const monthTags = getFilteredTags((tag) => /^(0[1-9]|1[0-2])$/.test(tag)); // Capture 1-12 month tags
     const yymmTags = getFilteredTags((tag) => /^(\d{2})-(\d{1,2})$/.test(tag));
 
     const latestYearTag =
@@ -87,6 +89,22 @@ function checkTags(
         latestYearTag === fullYearFromYYMM && mmFromYYMM === latestMonthTag
       );
     }
+  }
+
+  if (checkNoCarTag || checkDuplicateCarTags) {
+    const carTags = getFilteredTags(
+      (tag) =>
+        tag === "Gen2" ||
+        tag === "Gen3" ||
+        tag.toLowerCase().startsWith("red") ||
+        tag.toLowerCase().includes("blue") ||
+        tag.toLowerCase().includes("black") ||
+        tag.toLowerCase().includes("no car") ||
+        tag.toLowerCase().includes("grey") ||
+        tag.toLowerCase().includes("striped")
+    );
+    if (checkNoCarTag && carTags.length === 0) return true;
+    if (checkDuplicateCarTags && carTags.length > 1) return true;
   }
   return false;
 }
@@ -160,7 +178,10 @@ function createDivFormula() {
     "<div><input style='margin-right:8px;' id='__tagmn_checkduplicatemonth' type='checkbox'></input><label for='__tagmn_checkduplicatemonth'>Check for duplicate months</label></div>";
   strHTML +=
     "<div><input style='margin-right:8px;' id='__tagmn_checkinconsistentdate' type='checkbox'></input><label for='__tagmn_checkinconsistentdate'>Check inconsistent dates</label></div>";
-
+  strHTML +=
+    "<div><input style='margin-right:8px;' id='__tagmn_checknocartag' type='checkbox'></input><label for='__tagmn_checknocartag'>Check for untagged locations (car)</label></div>";
+  strHTML +=
+    "<div><input style='margin-right:8px;' id='__tagmn_checkduplicatecartag' type='checkbox'></input><label for='__tagmn_checkduplicatecartag'>Check for duplicate tags (car)</label></div>";
   // Rest
   strHTML += "<div style='display:flex;flex-direction:row;margin:15px;'>";
   strHTML +=
@@ -194,6 +215,15 @@ function createDivFormula() {
       );
       const checkInconsistentDates = inconsistentDateElement.checked;
 
+      const checkNoCarTagsElement = document.getElementById(
+        "__tagmn_checknocartag"
+      );
+      const checkNoCarTag = checkNoCarTagsElement.checked;
+      const checkDuplicateCarTagsElement = document.getElementById(
+        "__tagmn_checkduplicatecartag"
+      );
+      const checkDuplicateCarTag = checkDuplicateCarTagsElement.checked;
+
       let locationList = [];
       for (let i = 0; i < window.locations.length; i++) {
         if (
@@ -203,7 +233,9 @@ function createDivFormula() {
             checkDuplicateYear,
             checkNoMonth,
             checkDuplicateMonth,
-            checkInconsistentDates
+            checkInconsistentDates,
+            checkNoCarTag,
+            checkDuplicateCarTag
           )
         ) {
           locationList.push(window.locations[i]);
@@ -218,6 +250,7 @@ function createDivFormula() {
       monthDupEl.checked = false;
 
       inconsistentDateElement.checked = false;
+      checkNoCarTag.checked = false;
       document.getElementById("__tagmn_divFormula").style.display = "none";
     });
 }
