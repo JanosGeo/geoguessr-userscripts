@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         GeoGuessr Profile – Best/Worst Countries
 // @namespace    http://tampermonkey.net/
-// @version      0.1.4
+// @version      0.2.0
 // @description  Show a player's best and worst countries on their profile page, after the multiplayer box
 // @author       JanosGeo
 // @match        https://www.geoguessr.com/user/*
@@ -10,6 +10,8 @@
 // @grant        none
 // @license      MIT
 // ==/UserScript==
+
+// Update 0.2.0: Change how flags are generated - should work on more browsers than Firefox now
 
 function checkURL() {
   return (
@@ -28,11 +30,13 @@ async function checkBestCountries(profileId) {
 }
 
 function codeToFlagEmoji(code) {
-  const upper = code.toUpperCase();
-  const flag = upper.replace(/./g, (char) =>
-    String.fromCodePoint(char.charCodeAt(0) + 127397)
-  );
-  return `<span title="${upper}" style="font-size:24px; margin-right:4px;">${flag}</span>`;
+  const lower = code.toLowerCase();
+  return `<img
+    src="https://flagcdn.com/24x18/${lower}.png"
+    alt="${code.toUpperCase()} flag"
+    title="${code.toUpperCase()}"
+    style="margin-right:4px; vertical-align:middle;"
+  >`;
 }
 
 function showBestWorstCountries(data) {
@@ -48,14 +52,16 @@ function showBestWorstCountries(data) {
   container.style.marginTop = "12px";
   container.style.marginBottom = "12px";
   container.style.padding = "10px 20px 10px 10px";
-  container.style.border = "2px solid #ccc";
+  container.style.border = "1px solid #000";
   container.style.borderRadius = "5px";
   container.style.fontSize = "20px";
+  container.style.textTransform = "Upper";
   container.style.display = "grid";
   container.style.gridTemplateColumns = "80px auto";
   container.style.rowGap = "6px";
   container.style.alignItems = "center";
   container.style.textAlign = "left";
+  container.style.backgroundColor = "#2b2332";
 
   const best =
     data.bestCountries?.map((c) => codeToFlagEmoji(c)).join(" ") || "N/A";
@@ -69,7 +75,6 @@ function showBestWorstCountries(data) {
     <div>${worst}</div>
   `;
 
-  // 👇 Insert AFTER the multiplayer box
   multiplayerBox.parentNode.insertBefore(container, multiplayerBox.nextSibling);
 }
 
