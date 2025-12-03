@@ -24,7 +24,7 @@ function addNthTag(n) {
   if (tagButtons.length < n) return;
   // add the tag
   tagButtons[n - 1].click();
-  // 0.01 second timeout to avoid race condition on tag addition, should work pretty consistently
+  // some timeout to avoid race condition on tag addition, should work pretty consistently
   if (EXIT_LOCATION_ON_ADD) {
     setTimeout(
       () =>
@@ -32,7 +32,7 @@ function addNthTag(n) {
           .getElementsByClassName("location-preview__actions")[0]
           .getElementsByClassName("button--primary")[0]
           .click(),
-      10
+      100
     );
   }
 }
