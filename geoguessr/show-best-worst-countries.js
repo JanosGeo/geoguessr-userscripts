@@ -1,8 +1,8 @@
 // ==UserScript==
 // @name         GeoGuessr Profile – Best/Worst Countries
 // @namespace    http://tampermonkey.net/
-// @version      0.2.0
-// @description  Show a player's best and worst countries on their profile page, after the multiplayer box
+// @version      0.3.0
+// @description  Show a player's best and worst countries on their profile page, below the level progressbar
 // @author       JanosGeo
 // @match        https://www.geoguessr.com/user/*
 // @match        https://www.geoguessr.com/me/profile
@@ -10,6 +10,9 @@
 // @grant        none
 // @license      MIT
 // ==/UserScript==
+
+// Update 0.3.0: Adapt to new profile page by Geoguessr. The current position is TBD, it might change once other scripts that I personally use
+// have decided on their placements (specifically: head-to-head duel statistics script).
 
 // Update 0.2.0: Change how flags are generated - should work on more browsers than Firefox now
 
@@ -20,13 +23,16 @@ function checkURL() {
   );
 }
 
-async function checkBestCountries(profileId) {
-  return fetch(location.origin + "/api/v4/ranked-system/progress/" + profileId)
-    .then((out) => out.json())
-    .catch((err) => {
-      console.log(err);
-      return null;
-    });
+async function fetchBestCountries(profileId) {
+  try {
+    const res = await fetch(
+      `${location.origin}/api/v4/ranked-system/progress/${profileId}`
+    );
+    return res.json();
+  } catch (err) {
+    console.log("Fetch error:", err);
+    return null;
+  }
 }
 
 function codeToFlagEmoji(code) {
@@ -35,55 +41,75 @@ function codeToFlagEmoji(code) {
     src="https://flagcdn.com/24x18/${lower}.png"
     alt="${code.toUpperCase()} flag"
     title="${code.toUpperCase()}"
-    style="margin-right:4px; vertical-align:middle;"
+    style="margin-right:4px;vertical-align:middle;"
   >`;
 }
 
-function showBestWorstCountries(data) {
+function placeholderFlag(count = 3) {
+  const grayFlag =
+    '<div style="display:inline-block;width:24px;height:18px;background:#555;margin-right:4px;border:1px solid #333;border-radius:2px;vertical-align:middle;"></div>';
+  return Array(count).fill(grayFlag).join(" ");
+}
+
+/* ------------------------------------------------------------------ */
+/*  UI Rendering                                                      */
+/* ------------------------------------------------------------------ */
+
+function createBox() {
+  const box = document.createElement("div");
+  box.id = "best-worst-countries-box";
+  box.style = `
+    padding:10px 20px 10px 10px;
+    border:2px solid #000;
+    border-radius:5px;
+    font-size:20px;
+    display:flex;
+    align-items:center;
+    gap:3rem;
+    background-color:#1c163a;
+  `;
+  box.innerHTML = `
+    <div id="best-country-display"><strong>Best: ${placeholderFlag()}</strong></div>
+    <div id="worst-country-display"><strong>Worst: ${placeholderFlag()}</strong></div>
+  `;
+  return box;
+}
+
+function showPlaceholders() {
   const multiplayerBox = document.querySelector(
-    '[class^="multiplayer_root__"]'
+    '[class^="level-progress-bar_trackContainer"]'
   );
   if (!multiplayerBox) return;
 
-  if (document.getElementById("best-worst-countries-box")) return;
+  const old = document.getElementById("best-worst-countries-box");
+  if (old) old.remove();
 
-  const container = document.createElement("div");
-  container.id = "best-worst-countries-box";
-  container.style.marginTop = "12px";
-  container.style.marginBottom = "12px";
-  container.style.padding = "10px 20px 10px 10px";
-  container.style.border = "1px solid #000";
-  container.style.borderRadius = "5px";
-  container.style.fontSize = "20px";
-  container.style.textTransform = "Upper";
-  container.style.display = "grid";
-  container.style.gridTemplateColumns = "80px auto";
-  container.style.rowGap = "6px";
-  container.style.alignItems = "center";
-  container.style.textAlign = "left";
-  container.style.backgroundColor = "#2b2332";
+  const container = createBox();
+  multiplayerBox.parentNode.insertBefore(container, multiplayerBox.nextSibling);
+}
+
+function updateBox(data) {
+  const bestDisplay = document.getElementById("best-country-display");
+  const worstDisplay = document.getElementById("worst-country-display");
+  if (!bestDisplay || !worstDisplay) return;
 
   const best =
     data.bestCountries?.map((c) => codeToFlagEmoji(c)).join(" ") || "N/A";
   const worst =
     data.worstCountries?.map((c) => codeToFlagEmoji(c)).join(" ") || "N/A";
 
-  container.innerHTML = `
-    <div><strong>Best:</strong></div>
-    <div>${best}</div>
-    <div><strong>Worst:</strong></div>
-    <div>${worst}</div>
-  `;
-
-  multiplayerBox.parentNode.insertBefore(container, multiplayerBox.nextSibling);
+  bestDisplay.innerHTML = `<strong>Best: ${best}</strong>`;
+  worstDisplay.innerHTML = `<strong>Worst: ${worst}</strong>`;
 }
 
-// Utility to wait for elements added dynamically
+/* ------------------------------------------------------------------ */
+/*  Wait for dynamic elements                                         */
+/* ------------------------------------------------------------------ */
+
 function waitForElement(selector) {
   return new Promise((resolve) => {
     const el = document.querySelector(selector);
     if (el) return resolve(el);
-
     const obs = new MutationObserver(() => {
       const el = document.querySelector(selector);
       if (el) {
@@ -95,20 +121,50 @@ function waitForElement(selector) {
   });
 }
 
-// Watch page mutations
-let observer = new MutationObserver(() => {
+/* ------------------------------------------------------------------ */
+/*  Main logic                                                        */
+/* ------------------------------------------------------------------ */
+
+async function loadProfileData() {
   if (!checkURL()) return;
 
-  waitForElement('[class^="multiplayer_root__"]').then(() => {
-    const profileLink = location.pathname.includes("/me/profile")
-      ? document.querySelector('[name="copy-link"]').value
-      : location.href;
-    const profileId = profileLink.substr(profileLink.lastIndexOf("/") + 1);
+  await waitForElement('[class^="level-progress-bar_trackContainer"]');
 
-    checkBestCountries(profileId).then((data) => {
-      if (data) showBestWorstCountries(data);
-    });
-  });
-});
+  const profileLink = location.pathname.includes("/me/profile")
+    ? document.querySelector('[name="copy-link"]').value
+    : location.href;
+  const profileId = profileLink.split("/").pop();
 
-observer.observe(document.body, { subtree: true, childList: true });
+  showPlaceholders(); // Show placeholder UI first
+  const data = await fetchBestCountries(profileId);
+  if (data) updateBox(data);
+}
+
+/* ------------------------------------------------------------------ */
+/*  Detect SPA navigation changes (pushState/popstate)                */
+/* ------------------------------------------------------------------ */
+
+let lastURL = location.href;
+
+function checkForURLChange() {
+  if (location.href !== lastURL) {
+    lastURL = location.href;
+    loadProfileData(); // URL changed, reload data
+  }
+}
+
+// Hook history API
+const pushState = history.pushState;
+history.pushState = function () {
+  pushState.apply(this, arguments);
+  checkForURLChange();
+};
+const replaceState = history.replaceState;
+history.replaceState = function () {
+  replaceState.apply(this, arguments);
+  checkForURLChange();
+};
+window.addEventListener("popstate", checkForURLChange);
+
+// Initial load
+loadProfileData();
