@@ -101,7 +101,10 @@ function checkTags(
         tag.toLowerCase().includes("black") ||
         tag.toLowerCase().includes("no car") ||
         tag.toLowerCase().includes("grey") ||
-        tag.toLowerCase().includes("striped")
+        tag.toLowerCase().includes("striped") ||
+        tag.toLowerCase().includes("white truck") ||
+        tag.toLowerCase().includes("shit cam") ||
+        tag.toLowerCase().includes("small cam")
     );
     if (checkNoCarTag && carTags.length === 0) return true;
     if (checkDuplicateCarTags && carTags.length > 1) return true;

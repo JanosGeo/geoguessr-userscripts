@@ -176,10 +176,10 @@ function addStyle() {
 
 function createDivButton() {
   let divButton = document.createElement("button");
-  divButton.textContent = "Check Tags";
+  divButton.textContent = "Checker";
   divButton.id = "__tag_divButton";
   divButton.style.position = "fixed";
-  divButton.style.right = "205px";
+  divButton.style.right = "305px";
   divButton.style.bottom = "15px";
   divButton.style.borderRadius = "18px";
   divButton.style.fontSize = "15px";
