@@ -32,7 +32,7 @@ function addNthTag(n) {
           .getElementsByClassName("location-preview__actions")[0]
           .getElementsByClassName("button--primary")[0]
           .click(),
-      100
+      100,
     );
   }
 }

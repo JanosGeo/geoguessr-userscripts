@@ -24,7 +24,7 @@ function hasBadTags(
   checkMonthFalseUpdate,
   checkNoXXXXm,
   checkDuplicateXXXXm,
-  checkCopyrightYear
+  checkCopyrightYear,
 ) {
   const currentYear = new Date().getFullYear();
 
@@ -59,7 +59,7 @@ function hasBadTags(
         tag.startsWith("gen4-") ||
         tag.startsWith("gen3-") ||
         tag.startsWith("Smallcam") ||
-        tag.startsWith("Shitcam")
+        tag.startsWith("Shitcam"),
     );
     if (checkNoCar && carTags.length === 0) return true;
     if (checkDuplicateCar && carTags.length > 1) return true;
@@ -96,7 +96,7 @@ function hasBadTags(
       });
       const monthTags = getFilteredTags((tag) => /^(0[1-9]|1[0-2])$/.test(tag)); // Capture 01-12 month tags
       const yymmTags = getFilteredTags((tag) =>
-        /^(\d{2})-(\d{1,2})$/.test(tag)
+        /^(\d{2})-(\d{1,2})$/.test(tag),
       );
 
       const latestYearTag =
@@ -272,16 +272,16 @@ function createDivFormula() {
       const noYYMMElement = document.getElementById("__tag_checknoyymm");
       const checkNoYYMM = noYYMMElement.checked;
       const dupYYMMElement = document.getElementById(
-        "__tag_checkduplicateyymm"
+        "__tag_checkduplicateyymm",
       );
       const checkDuplicateYYMM = dupYYMMElement.checked;
       const badUpdatesElement = document.getElementById(
-        "__tag_checkbadupdates"
+        "__tag_checkbadupdates",
       );
       const checkBadUpdates = badUpdatesElement.checked;
 
       const falseMonthUpdate = document.getElementById(
-        "__tag_checkmonthfalseupdate"
+        "__tag_checkmonthfalseupdate",
       );
       const checkMonthFalseUpdate = falseMonthUpdate.checked;
 
@@ -289,12 +289,12 @@ function createDivFormula() {
       const noXXXXmElement = document.getElementById("__tag_checkno_xxxxm");
       const checkNoXXXXm = noXXXXmElement.checked;
       const dupXXXXmElement = document.getElementById(
-        "__tag_checkduplicate_xxxxm"
+        "__tag_checkduplicate_xxxxm",
       );
       const checkDuplicateXXXXm = dupXXXXmElement.checked;
 
       const copyrightYearElement = document.getElementById(
-        "__tag_checkcopyrightyear"
+        "__tag_checkcopyrightyear",
       );
       const checkCopyrightYear = copyrightYearElement.checked;
 
@@ -315,7 +315,7 @@ function createDivFormula() {
             checkMonthFalseUpdate,
             checkNoXXXXm,
             checkDuplicateXXXXm,
-            checkCopyrightYear
+            checkCopyrightYear,
           )
         ) {
           locationList.push(window.locations[i]);

@@ -18,7 +18,7 @@ function checkTags(
   checkDuplicateMonth,
   checkInconsistentDates,
   checkNoCarTag,
-  checkDuplicateCarTags
+  checkDuplicateCarTags,
 ) {
   const currentYear = new Date().getFullYear();
 
@@ -104,7 +104,7 @@ function checkTags(
         tag.toLowerCase().includes("striped") ||
         tag.toLowerCase().includes("white truck") ||
         tag.toLowerCase().includes("shit cam") ||
-        tag.toLowerCase().includes("small cam")
+        tag.toLowerCase().includes("small cam"),
     );
     if (checkNoCarTag && carTags.length === 0) return true;
     if (checkDuplicateCarTags && carTags.length > 1) return true;
@@ -214,16 +214,16 @@ function createDivFormula() {
       const checkDuplicateMonth = monthDupEl.checked;
 
       const inconsistentDateElement = document.getElementById(
-        "__tagmn_checkinconsistentdate"
+        "__tagmn_checkinconsistentdate",
       );
       const checkInconsistentDates = inconsistentDateElement.checked;
 
       const checkNoCarTagsElement = document.getElementById(
-        "__tagmn_checknocartag"
+        "__tagmn_checknocartag",
       );
       const checkNoCarTag = checkNoCarTagsElement.checked;
       const checkDuplicateCarTagsElement = document.getElementById(
-        "__tagmn_checkduplicatecartag"
+        "__tagmn_checkduplicatecartag",
       );
       const checkDuplicateCarTag = checkDuplicateCarTagsElement.checked;
 
@@ -238,7 +238,7 @@ function createDivFormula() {
             checkDuplicateMonth,
             checkInconsistentDates,
             checkNoCarTag,
-            checkDuplicateCarTag
+            checkDuplicateCarTag,
           )
         ) {
           locationList.push(window.locations[i]);
