@@ -35,7 +35,6 @@ class MmaConnection:
             ),
         )
         assert req.status_code == 200, req.text
-
     def remove_locs_from_map(self, map_id, locations):
         UnicodeTranslateError = f"https://map-making.app/api/maps/{map_id}/locations"
         req = self._session.post(
