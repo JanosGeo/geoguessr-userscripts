@@ -21,6 +21,8 @@ parser.add_argument(
     nargs="*",
     help="If provided, only locations that include any of these tags will be changed",
 )
+parser.add_argument("--keep-yymm", action="store_true", help="If set, will keep the YY-MM tag as well as adding YYYY and MM tags.")
+
 args = parser.parse_args()
 map_id = int(args.map_id)
 TOKEN = os.environ["API_KEY"]
@@ -36,7 +38,7 @@ with open("split_tags_before.json", "w") as fp:
     json.dump(locs, fp, indent=4)
 
 
-def process_tags(tag_list):
+def process_tags(tag_list, keep_yymm):
     processed_list = []
     yy_m_mm_pattern = re.compile(r"^\d{2}-\d{1,2}$")
     found = False
@@ -55,9 +57,12 @@ def process_tags(tag_list):
 
             processed_list.append(full_year)
             processed_list.append(padded_month)
+            if keep_yymm:
+                processed_list.append(tag)
         else:
             processed_list.append(tag)
-    return found, processed_list
+        
+    return found, list(set(processed_list))
 
 
 new_locs = []
@@ -66,7 +71,7 @@ remove_locs = []
 for loc in existing_locs:
     if args.tags is not None and not any((t in args.tags for t in loc["tags"])):
         continue
-    found, tags = process_tags(loc["tags"])
+    found, tags = process_tags(loc["tags"], args.keep_yymm)
     if found:
         new_loc = copy.deepcopy(loc)
         new_loc["tags"] = tags
