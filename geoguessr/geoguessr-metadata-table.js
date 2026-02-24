@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Geoguessr Challenge metadata table
 // @namespace    http://tampermonkey.net/
-// @version      1.2
+// @version      1.3
 // @license      MIT
 // @description  Creates a table with some metadata for challenges
 // @author       JanosGeo
@@ -23,6 +23,11 @@
     const minutes = Math.floor(totalSeconds / 60);
     const seconds = totalSeconds % 60;
     return `${minutes}m${seconds}s`;
+  }
+
+  // Format date to readable string
+  function formatDate(date) {
+    return `${date.toLocaleDateString()} ${date.toLocaleTimeString()}`;
   }
 
   // Get game ID from URL
@@ -70,15 +75,30 @@
 
       const firstStart = startTimes[0];
       const lastStart = startTimes[startTimes.length - 1];
+      const lastGuessTime = (guesses[guesses.length - 1]?.time || 0) * 1000;
+      const lastRoundEnd = lastStart + lastGuessTime;
+
+      // Build per-round data
+      const roundDetails = [];
+      for (let i = 0; i < rounds.length; i++) {
+        roundDetails.push({
+          roundNumber: i + 1,
+          points: guesses[i]?.roundScore.amount || 0,
+          startTime: startTimes[i],
+          guessTime: (guesses[i]?.time || 0) * 1000,
+        });
+      }
 
       results.push({
         name: player.nick,
         startFirst: firstStart,
-        startLast: lastStart,
-        totalElapsed: lastStart - firstStart,
+        startLast: lastRoundEnd,
+        lastRoundGuessTime: lastGuessTime,
+        totalElapsed: lastRoundEnd - firstStart,
         roundsPlayed: roundsPlayed,
         medianBetweenRounds: getMedian(roundDiffs),
         maxBetweenRounds: Math.max(...roundDiffs, 0),
+        roundDetails: roundDetails,
       });
     }
 
@@ -99,7 +119,7 @@
                     margin: 0 0 16px 0;
                     color: #fff;
                     font-size: 18px;
-                ">Challenge Results (ordered by start time)</h3>
+                ">Challenge Data (ordered by start time, click on row to show per-round stats)</h3>
                 <table style="
                     width: 100%;
                     border-collapse: collapse;
@@ -133,7 +153,13 @@
                                 padding: 10px 8px;
                                 color: #888;
                                 font-weight: 600;
-                            ">Last Round started</th>
+                            ">Last round ended</th>
+                            <th style="
+                                text-align: left;
+                                padding: 10px 8px;
+                                color: #888;
+                                font-weight: 600;
+                            ">Time on last round</th>
                             <th style="
                                 text-align: left;
                                 padding: 10px 8px;
@@ -168,15 +194,47 @@
       const lastDate = new Date(r.startLast);
 
       tableHtml += `
-                <tr style="border-bottom: 1px solid #333;">
+                <tr class="results-row" data-index="${index}" style="cursor: pointer; border-bottom: 1px solid #333;">
                     <td style="padding: 10px 8px; color: #666;">${index + 1}</td>
                     <td style="padding: 10px 8px; font-weight: 500;">${r.name}</td>
-                    <td style="padding: 10px 8px;">${firstDate.toLocaleDateString()} ${firstDate.toLocaleTimeString()}</td>
-                    <td style="padding: 10px 8px;">${lastDate.toLocaleDateString()} ${lastDate.toLocaleTimeString()}</td>
+                    <td style="padding: 10px 8px;">${formatDate(firstDate)}</td>
+                    <td style="padding: 10px 8px;">${formatDate(lastDate)}</td>
+                    <td style="padding: 10px 8px;">${formatTime(r.lastRoundGuessTime)}</td>
                     <td style="padding: 10px 8px;">${r.roundsPlayed}</td>
                     <td style="padding: 10px 8px;">${formatTime(r.totalElapsed)}</td>
                     <td style="padding: 10px 8px;">${formatTime(r.medianBetweenRounds)}</td>
                     <td style="padding: 10px 8px;">${formatTime(r.maxBetweenRounds)}</td>
+                </tr>
+                <tr class="details-row" data-index="${index}" style="display: none; border-bottom: 1px solid #333;">
+                    <td colspan="9" style="padding: 0;">
+                        <table style="width: 100%; background: #252525; border-collapse: collapse;">
+                            <thead>
+                                <tr style="border-bottom: 1px solid #444;">
+                                    <th style="text-align: left; padding: 8px 16px; color: #aaa; font-weight: 600;">Round</th>
+                                    <th style="text-align: left; padding: 8px 16px; color: #aaa; font-weight: 600;">Points</th>
+                                    <th style="text-align: left; padding: 8px 16px; color: #aaa; font-weight: 600;">Time Started</th>
+                                    <th style="text-align: left; padding: 8px 16px; color: #aaa; font-weight: 600;">Time Spent</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+        `;
+
+      r.roundDetails.forEach((rd) => {
+        const roundStartDate = new Date(rd.startTime);
+        tableHtml += `
+                                <tr style="border-bottom: 1px solid #333;">
+                                    <td style="padding: 8px 16px; color: #888;">${rd.roundNumber}</td>
+                                    <td style="padding: 8px 16px;">${rd.points}</td>
+                                    <td style="padding: 8px 16px;">${formatDate(roundStartDate)}</td>
+                                    <td style="padding: 8px 16px;">${formatTime(rd.guessTime)}</td>
+                                </tr>
+        `;
+      });
+
+      tableHtml += `
+                            </tbody>
+                        </table>
+                    </td>
                 </tr>
             `;
     });
@@ -199,6 +257,20 @@
 
     const tableHtml = createTable(data);
     container.insertAdjacentHTML("afterend", tableHtml);
+
+    // Add click handlers for expandable rows
+    document.querySelectorAll(".results-row").forEach((row) => {
+      row.addEventListener("click", () => {
+        const index = row.getAttribute("data-index");
+        const detailsRow = document.querySelector(
+          `.details-row[data-index="${index}"]`,
+        );
+        if (detailsRow) {
+          detailsRow.style.display =
+            detailsRow.style.display === "none" ? "table-row" : "none";
+        }
+      });
+    });
   }
 
   // Fetch data from Geoguessr API
