@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Geoguessr Challenge metadata table
 // @namespace    http://tampermonkey.net/
-// @version      1.3
+// @version      1.4
 // @license      MIT
 // @description  Creates a table with some metadata for challenges
 // @author       JanosGeo
@@ -207,26 +207,37 @@
                 </tr>
                 <tr class="details-row" data-index="${index}" style="display: none; border-bottom: 1px solid #333;">
                     <td colspan="9" style="padding: 0;">
-                        <table style="width: 100%; background: #252525; border-collapse: collapse;">
+                        <table style="width: auto; background: #252525; border-collapse: collapse; min-width: 0;">
                             <thead>
                                 <tr style="border-bottom: 1px solid #444;">
-                                    <th style="text-align: left; padding: 8px 16px; color: #aaa; font-weight: 600;">Round</th>
-                                    <th style="text-align: left; padding: 8px 16px; color: #aaa; font-weight: 600;">Points</th>
-                                    <th style="text-align: left; padding: 8px 16px; color: #aaa; font-weight: 600;">Time Started</th>
-                                    <th style="text-align: left; padding: 8px 16px; color: #aaa; font-weight: 600;">Time Spent</th>
+                                    <th style="text-align: left; padding: 4px 8px; color: #aaa; font-weight: 600; white-space: nowrap;">Round</th>
+                                    <th style="text-align: left; padding: 4px 8px; color: #aaa; font-weight: 600; white-space: nowrap;">Points</th>
+                                    <th style="text-align: left; padding: 4px 8px; color: #aaa; font-weight: 600; white-space: nowrap;">Time before</th>
+                                    <th style="text-align: left; padding: 4px 8px; color: #aaa; font-weight: 600; white-space: nowrap;">Time Started</th>
+                                    <th style="text-align: left; padding: 4px 12px; color: #aaa; font-weight: 600; white-space: nowrap;">Time Spent</th>
                                 </tr>
                             </thead>
                             <tbody>
         `;
 
-      r.roundDetails.forEach((rd) => {
+      r.roundDetails.forEach((rd, rdIndex) => {
         const roundStartDate = new Date(rd.startTime);
+
+        // Calculate gap from previous round (excluding guess time)
+        let gap = "";
+        if (rdIndex > 0) {
+          const prevRound = r.roundDetails[rdIndex - 1];
+          const prevGuessTime = prevRound.guessTime;
+          gap = formatTime(rd.startTime - prevRound.startTime - prevGuessTime);
+        }
+
         tableHtml += `
                                 <tr style="border-bottom: 1px solid #333;">
-                                    <td style="padding: 8px 16px; color: #888;">${rd.roundNumber}</td>
-                                    <td style="padding: 8px 16px;">${rd.points}</td>
-                                    <td style="padding: 8px 16px;">${formatDate(roundStartDate)}</td>
-                                    <td style="padding: 8px 16px;">${formatTime(rd.guessTime)}</td>
+                                    <td style="padding: 3px 8px; color: #888; white-space: nowrap;">${rd.roundNumber}</td>
+                                    <td style="padding: 3px 8px; white-space: nowrap;">${rd.points}</td>
+                                    <td style="padding: 3px 8px; white-space: nowrap;">${gap}</td>
+                                    <td style="padding: 3px 8px; white-space: nowrap;">${formatDate(roundStartDate)}</td>
+                                    <td style="padding: 3px 12px; white-space: nowrap;">${formatTime(rd.guessTime)}</td>
                                 </tr>
         `;
       });
