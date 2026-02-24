@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Geoguessr Challenge metadata table
 // @namespace    http://tampermonkey.net/
-// @version      1.1
+// @version      1.2
 // @license      MIT
 // @description  Creates a table with some metadata for challenges
 // @author       JanosGeo
@@ -18,6 +18,7 @@
 
   // Format milliseconds to XXmYYs
   function formatTime(ms) {
+    if (ms < 0) ms = 0;
     const totalSeconds = Math.floor(ms / 1000);
     const minutes = Math.floor(totalSeconds / 60);
     const seconds = totalSeconds % 60;
@@ -52,13 +53,19 @@
       const game = pd.game;
       const player = game.player;
       const rounds = game.rounds;
+      const guesses = game.player.guesses;
 
       const startTimes = rounds.map((r) => new Date(r.startTime).getTime());
+      const roundsPlayed = rounds.length;
 
-      // Calculate time differences between consecutive rounds
+      // Calculate time differences between consecutive rounds (excluding guess time)
       const roundDiffs = [];
       for (let i = 1; i < startTimes.length; i++) {
-        roundDiffs.push(startTimes[i] - startTimes[i - 1]);
+        // Gap = time between round starts minus the time player spent guessing in the previous round
+        // guessTime is in seconds, so multiply by 1000 to convert to milliseconds
+        const guessTime = (guesses[i - 1]?.time || 0) * 1000;
+        const gap = startTimes[i] - startTimes[i - 1] - guessTime;
+        roundDiffs.push(gap);
       }
 
       const firstStart = startTimes[0];
@@ -69,6 +76,7 @@
         startFirst: firstStart,
         startLast: lastStart,
         totalElapsed: lastStart - firstStart,
+        roundsPlayed: roundsPlayed,
         medianBetweenRounds: getMedian(roundDiffs),
         maxBetweenRounds: Math.max(...roundDiffs, 0),
       });
@@ -131,6 +139,12 @@
                                 padding: 10px 8px;
                                 color: #888;
                                 font-weight: 600;
+                            ">Rounds</th>
+                            <th style="
+                                text-align: left;
+                                padding: 10px 8px;
+                                color: #888;
+                                font-weight: 600;
                             ">Total Time for challenge</th>
                             <th style="
                                 text-align: left;
@@ -159,6 +173,7 @@
                     <td style="padding: 10px 8px; font-weight: 500;">${r.name}</td>
                     <td style="padding: 10px 8px;">${firstDate.toLocaleDateString()} ${firstDate.toLocaleTimeString()}</td>
                     <td style="padding: 10px 8px;">${lastDate.toLocaleDateString()} ${lastDate.toLocaleTimeString()}</td>
+                    <td style="padding: 10px 8px;">${r.roundsPlayed}</td>
                     <td style="padding: 10px 8px;">${formatTime(r.totalElapsed)}</td>
                     <td style="padding: 10px 8px;">${formatTime(r.medianBetweenRounds)}</td>
                     <td style="padding: 10px 8px;">${formatTime(r.maxBetweenRounds)}</td>
