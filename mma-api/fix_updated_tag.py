@@ -13,15 +13,16 @@ from lib.mma import MmaConnection
 from lib.get_adjecent_panos import get_adjacent_panos
 from lib.get_pano_date import get_pano_date
 from lib.get_lat_lng import get_pano_lat_lng
+from lib.argparser import add_mapid
 
 parser = argparse.ArgumentParser(
     prog="Fix locations tagged as updated. Remember to give the tags YY-MM tags before running this script",
 )
+add_mapid(parser)
 
 def pprint(obj):
     print(json.dumps(obj, indent=2))
 
-parser.add_argument("map_id")
 args = parser.parse_args()
 load_dotenv()
 TOKEN = os.environ["API_KEY"]
@@ -141,10 +142,15 @@ for loc in tqdm.tqdm(check_locs):
             add_loc["lat"] = lat
             add_loc["lng"] = lng
             tags = loc["tags"]
+
             if yymm_tag == new_yymm_tag:
                 tags.remove(yymm_tag)
                 tags.remove("Updated")
                 LOG["Found old coverage"] += 1
+            elif (new_year, new_month) == (new_year, new_month):
+                LOG["False update after searching for new coverage"] += 1
+                tags.remove(yymm_tag)
+                tags.remove("Updated")
             else:
                 LOG["Found even newer coverage"] += 1
                 assert new_year is not None

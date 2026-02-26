@@ -6,6 +6,7 @@ import numpy as np
 from tqdm import tqdm
 from dotenv import load_dotenv
 
+from lib.argparser import add_mapid
 from lib.mma import MmaConnection
 from lib.distances import haversine_distance_coord
 
@@ -14,7 +15,7 @@ from lib.distances import haversine_distance_coord
 parser = argparse.ArgumentParser(
     prog="Add locations that is new coverage",
 )
-parser.add_argument("map_id")
+add_mapid(parser)
 parser.add_argument("--distance", type=float, required=False, default=1000)
 parser.add_argument("--same-coverage-factor", type=float, required=False, default=0.5)
 parser.add_argument("--group-size", type=int, required=False, default=1)

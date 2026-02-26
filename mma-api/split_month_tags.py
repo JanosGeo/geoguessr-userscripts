@@ -8,13 +8,14 @@ import copy
 
 from dotenv import load_dotenv
 from lib.mma import MmaConnection
+from lib.argparser import add_mapid
 
 load_dotenv()
 
 parser = argparse.ArgumentParser(
     prog="Split month tags",
 )
-parser.add_argument("map_id")
+add_mapid(parser)
 parser.add_argument(
     "-t",
     "--tags",
