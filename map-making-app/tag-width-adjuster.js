@@ -17,7 +17,7 @@
     items.forEach((li) => {
       // Trim leading/trailing spaces and check if text starts with '---'
       const text = (li.textContent || "").trim();
-      if (text.startsWith("-----")) {
+      if (text.includes("-----") || text.includes("───")) {
         li.style.width = "100%";
       }
     });
