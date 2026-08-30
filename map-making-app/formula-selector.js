@@ -112,35 +112,62 @@ function textColor(arr) {
 }
 
 function updateTagList() {
-  // Read tags in the proper order
-  let tags = [];
-  for (const tag in window.editor.tags) {
-    tags.push(window.editor.tags[tag]);
-  }
-  tags.sort((a, b) => a.order - b.order);
+  const tags = Object.values(window.editor.tags).sort(
+    (a, b) => a.order - b.order,
+  );
 
   let strHTML = "";
-  for (const tag in tags) {
-    const name = tags[tag].tag;
-    strHTML +=
-      "<button id='buttonTag_" +
-      name +
-      "' class='buttonFormula'>" +
-      name +
-      "</button>";
-  }
-  document.getElementById("divTagList").innerHTML = strHTML;
 
-  for (const tag in tags) {
-    const name = tags[tag].tag;
-    let button = document.getElementById("buttonTag_" + name);
-    button.style.backgroundColor = rgbToHex(tags[tag].color);
-    button.style.color = textColor(tags[tag].color);
+  for (const tag of tags) {
+    const bgColor = `rgb(${tag.color[0]}, ${tag.color[1]}, ${tag.color[2]})`;
+    const fgColor = textColor(tag.color);
+
+    strHTML += `
+      <li
+        class="tag has-button"
+        data-state="closed"
+        draggable="true"
+        data-drop-target-for-element="true"
+        style="
+          background-color: ${bgColor};
+          color: ${fgColor};
+          padding: 0;
+          margin: 0.2em;
+        "
+      >
+        <button
+          class="tag__button tag__button--edit button"
+          type="button"
+          data-tag="${tag.tag}"
+          style="
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: transparent;
+            border: none;
+            color: inherit;
+            text-align: center;
+          "
+        >
+          ${tag.tag}
+        </button>
+      </li>
+    `;
+  }
+
+  const divTagList = document.getElementById("divTagList");
+  divTagList.innerHTML = strHTML;
+
+  divTagList.querySelectorAll(".tag__button--edit").forEach((button) => {
+    const tagName = button.dataset.tag;
+
     button.addEventListener("contextmenu", (event) => event.preventDefault());
     button.addEventListener("mousedown", (event) => {
-      handleClick(event, name);
+      handleClick(event, tagName);
     });
-  }
+  });
 }
 
 function createDivFormula() {
@@ -215,15 +242,16 @@ function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-//main
-
-//wait for page load
-while (window.editor == undefined) {
+// main
+(async () => {
+  // wait for page load
+  while (window.editor == undefined) {
+    await sleep(250);
+  }
   await sleep(250);
-}
-await sleep(250);
 
-//add buttons and styles
-addStyle();
-createDivButton();
-createDivFormula();
+  // add buttons and styles
+  addStyle();
+  createDivButton();
+  createDivFormula();
+})();
