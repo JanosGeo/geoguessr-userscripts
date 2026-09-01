@@ -1,12 +1,54 @@
 // ==UserScript==
-// @name         map-making.app toggle tags with name
+// @name         map-making.app toggle tags with names
 // @namespace    http://tampermonkey.net/
-// @version      1.1
+// @version      1.2
 // @author       JanosGeo
 // @match        *://map-making.app/maps/*
-// @description  Toggle visibility of tags starting with "Meta -" (per map)
+// @description  Toggle visibility of some tags
 // @grant        none
 // ==/UserScript==
+
+function shouldHide(text) {
+  const raw = text == null ? "" : String(text);
+  const cleaned = raw.replace(/^[✔️✓]\s*/, "").trim();
+
+  if (cleaned.startsWith("Meta -")) {
+    return true;
+  }
+
+  // YY-MM format (e.g., "23-05", "99-12")
+  if (/^\d{2}-\d{2}$/.test(cleaned)) {
+    return true;
+  }
+
+  // Literal "----YY-MM----"
+  if (cleaned.includes("----YY-MM----")) {
+    return true;
+  }
+  // Literal "----MISC----"
+  if (cleaned.includes("----MISC----")) {
+    return true;
+  }
+
+  if (/^Pt\d+$/.test(cleaned)) {
+    return true;
+  }
+
+  if (
+    cleaned === "Exposedness treated" ||
+    cleaned === "Color treated" ||
+    cleaned === "Brakelight treated"
+  ) {
+    return true;
+  }
+
+  // Conf: with percentage, including <50%
+  if (/Conf:\s*(?:[<>]\d+|\d+(?:-\d+)?)%/.test(cleaned)) {
+    return true;
+  }
+
+  return false;
+}
 
 (function () {
   "use strict";
@@ -17,7 +59,7 @@
   }
 
   const mapId = getMapId();
-  const storageKey = `mma-hide-meta-tags-${mapId}`;
+  const storageKey = `mma-map-nerds-hide-tags-${mapId}`;
 
   let hideMetaTags = localStorage.getItem(storageKey) === "true";
 
@@ -25,8 +67,24 @@
     const items = document.querySelectorAll("ul.tag-list li.tag.has-button");
 
     items.forEach((li) => {
-      const text = (li.textContent || "").trim();
-      if (text.startsWith("Meta -")) {
+      const label = li.querySelector("label.tag__text");
+      let text = "";
+
+      if (label) {
+        // Clone to avoid modifying the real DOM
+        const clone = label.cloneNode(true);
+        // Remove the count <small> if present
+        const small = clone.querySelector("small");
+        if (small) {
+          small.remove();
+        }
+        text = (clone.textContent || "").trim();
+      } else {
+        // Fallback to raw textContent if structure is unexpected
+        text = (li.textContent || "").trim();
+      }
+
+      if (shouldHide(text)) {
         li.style.display = hideMetaTags ? "none" : "";
       }
     });
@@ -47,12 +105,12 @@
 
     const checkbox = document.createElement("input");
     checkbox.type = "checkbox";
-    checkbox.id = "mma-toggle-meta-tags";
+    checkbox.id = "mma-map-nerds-hide-tags";
     checkbox.checked = hideMetaTags;
 
     const label = document.createElement("label");
     label.htmlFor = checkbox.id;
-    label.textContent = " Hide Info tags";
+    label.textContent = " Hide detailed tags";
     label.style.cursor = "pointer";
 
     checkbox.addEventListener("change", () => {
