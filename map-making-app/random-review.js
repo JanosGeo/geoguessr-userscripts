@@ -92,6 +92,8 @@
   let pathMode = false;
   let popover = null;
   let hideTimer = null;
+  let showTimer = null;
+  const SHOW_DELAY_MS = 400;
   const compassCells = new Map();
 
   function directionById(id) {
@@ -299,8 +301,23 @@
     paintCompass();
   }
 
+  function cancelShow() {
+    clearTimeout(showTimer);
+    showTimer = null;
+  }
+
+  function scheduleShow() {
+    cancelShow();
+    if (popover && popover.style.display === "block") return;
+    showTimer = setTimeout(() => {
+      showTimer = null;
+      showPopover();
+    }, SHOW_DELAY_MS);
+  }
+
   function hidePopover() {
     clearTimeout(hideTimer);
+    cancelShow();
     if (popover) popover.style.display = "none";
   }
 
@@ -459,10 +476,11 @@
       clearTimeout(hideTimer);
       applyArrowTransform(1.2);
       arrow.style.filter = "brightness(1.3)";
-      showPopover();
+      scheduleShow();
     });
 
     arrow.addEventListener("mouseleave", (event) => {
+      cancelShow();
       applyArrowTransform(1);
       arrow.style.filter = "brightness(1)";
       if (popover && popover.contains(event.relatedTarget)) return;
